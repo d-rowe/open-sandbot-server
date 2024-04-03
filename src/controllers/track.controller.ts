@@ -13,7 +13,7 @@ export class TrackController {
     constructor(private readonly trackService: TrackService) {}
 
     @Post('/api/tracks/start')
-    async startTrack(): Promise<void> {
+    async start(): Promise<void> {
         const sandbotStatus = this.trackService.getSandbotStatus();
         if (sandbotStatus === BOT_STATUS.DISCONNECTED) {
             throw new HttpException('Sandbot not connected', HttpStatus.CONFLICT);
@@ -24,6 +24,16 @@ export class TrackController {
         }
 
         this.trackService.start();
+    }
+
+    @Post('/api/tracks/pause')
+    pause() {
+        this.trackService.pause();
+    }
+
+    @Post('/api/tracks/resume')
+    resume() {
+        this.trackService.resume();
     }
 
     @Get('/api/tracks')

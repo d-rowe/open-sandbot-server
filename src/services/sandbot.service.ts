@@ -131,7 +131,6 @@ export class SandbotService {
                 });
 
                 connected = true;
-                console.info('Sandbot connected');
             } catch (err) {
                 await delay(1_000);
             }
@@ -142,21 +141,20 @@ export class SandbotService {
 
     private async onConnectSuccess() {
         this.status = BOT_STATUS.IDLE;
-        this.port.on('data', (data: Buffer) => {
-            const message = getMessage(data);
+        this.port.on('data', (msg: Buffer) => {
+            const message = parseMessageBuffer(msg);
             const handler = this.MESSAGE_HANDLERS[message];
             handler?.();
         });
 
         this.port.on('close', () => {
-            this.port = undefined;
             this.status = BOT_STATUS.DISCONNECTED;
             this.connect();
         });
     }
 }
 
-function getMessage(buffer: Buffer): string {
-    const lines = buffer.toString().split('\n');
+function parseMessageBuffer(messageBuffer: Buffer): string {
+    const lines = messageBuffer.toString().split('\n');
     return lines[0].trim();
 }
