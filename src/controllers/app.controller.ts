@@ -11,7 +11,6 @@ export class AppController {
 
     @Get()
     async getHello(): Promise<string> {
-        this.trackService.start();
         return this.appService.getHello();
     }
 }

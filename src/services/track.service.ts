@@ -1,9 +1,10 @@
 const LineReader = require('n-readlines');
 const path = require('path');
+const fs = require('fs/promises');
 import {Injectable} from '@nestjs/common';
-import {BOT_STATUS, SandbotService} from './sandbot.service';
+import {SandbotService} from './sandbot.service';
 
-const trackPath = path.join(process.cwd(), 'tracks', 'LinedCircles4.thr');
+const trackDir = path.join(process.cwd(), 'tracks');
 
 @Injectable()
 export class TrackService {
@@ -13,27 +14,17 @@ export class TrackService {
     private paused = false;
     constructor(private readonly sandbot: SandbotService) {}
 
-    async start() {
-        if (this.sandbot.getStatus() !== BOT_STATUS.IDLE) {
-            return;
-        }
-
-        this.lineReader = new LineReader(trackPath);
+    async start(name: string) {
+        const trackFile = path.join(trackDir, `${name}.thr`);
+        this.lineReader = new LineReader(trackFile);
         this.processFile();
     }
 
-    public pause() {
-        this.paused = true;
+    async getTracks(): Promise<string[]> {
+        const files = await fs.readdir(trackDir);
+        return files.map(f => f.replace('.thr', ''));
     }
 
-    public resume() {
-        this.paused = false;
-        this.processFile();
-    }
-
-    public getSandbotStatus(): BOT_STATUS {
-        return this.sandbot.getStatus();
-    }
 
     private async processFile() {
         if (!this.lineReader) {
@@ -57,8 +48,8 @@ export class TrackService {
             return;
         }
 
-        await this.sandbot.move(theta, rho);
         this.theta = theta;
         this.rho = rho;
+        await this.sandbot.move(theta, rho);
     }
 }
