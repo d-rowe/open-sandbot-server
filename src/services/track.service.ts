@@ -1,30 +1,44 @@
-const LineReader = require('n-readlines');
-const path = require('path');
-const fs = require('fs/promises');
+import * as LineReader from 'n-readlines';
+import * as path from 'path';
+import * as fs from 'fs/promises';
 import {Injectable} from '@nestjs/common';
 import {SandbotService} from './sandbot.service';
 
-const trackDir = path.join(process.cwd(), 'tracks');
+const TRACK_DIR = path.join(process.cwd(), 'tracks');
+const TRACK_EXTENSION = 'thr';
 
 @Injectable()
 export class TrackService {
     private theta: number = 0;
     private rho: number = 1;
-    private lineReader;
+    private lineReader: LineReader | null = null;
     private paused = false;
     constructor(private readonly sandbot: SandbotService) {}
 
-    async start(name: string) {
-        const trackFile = path.join(trackDir, `${name}.thr`);
-        this.lineReader = new LineReader(trackFile);
+    public start(name: string) {
+        const trackPath = path.join(TRACK_DIR, `${name}.${TRACK_EXTENSION}`);
+        this.lineReader = new LineReader(trackPath);
         this.processFile();
     }
 
-    async getTracks(): Promise<string[]> {
-        const files = await fs.readdir(trackDir);
-        return files.map(f => f.replace('.thr', ''));
+    public pause() {
+        this.paused = true;
     }
 
+    public resume() {
+        this.paused = false;
+        this.processFile();
+    }
+
+    public stop() {
+        this.paused = false;
+        this.lineReader = null;
+    }
+
+    public async getTracks(): Promise<string[]> {
+        const files = await fs.readdir(TRACK_DIR);
+        return files.map(f => f.replace(TRACK_EXTENSION, ''));
+    }
 
     private async processFile() {
         if (!this.lineReader) {

@@ -1,7 +1,8 @@
 import {
+    Body,
     Controller,
     Get,
-    Param,
+    HttpException,
     Post,
 } from '@nestjs/common';
 import {TrackService} from '../services/track.service';
@@ -10,9 +11,14 @@ import {TrackService} from '../services/track.service';
 export class TrackController {
     constructor(private readonly trackService: TrackService) {}
 
-    @Post('/api/tracks/start/:trackName')
-    async start(@Param() param): Promise<void> {
-        this.trackService.start(param.trackName);
+    @Post('/api/tracks/start')
+    async start(@Body() body): Promise<void> {
+        console.log(body);
+        try {
+            this.trackService.start(body.trackName);
+        } catch (err) {
+            throw new HttpException(err.message, 500);
+        }
     }
 
     @Get('/api/tracks')

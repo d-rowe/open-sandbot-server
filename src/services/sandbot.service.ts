@@ -12,7 +12,7 @@ const HARDWARE_CONFIG = {
     CONNECTION_RETRY_DELAY: 1_000,
 } as const;
 
-export enum STATUS {
+enum STATUS {
     MOVING = 'MOVING',
     IDLE = 'IDLE',
     DISCONNECTED = 'DISCONNECTED',
@@ -25,7 +25,7 @@ const MESSAGE_STATUS_MAP = {
 
 enum COMMAND {
     MOVE = 'MOVE',
-    SET_SPEED = 'SET_SPEED',
+    SPEED = 'SPEED',
     PAUSE = 'PAUSE',
     RESUME = 'RESUME',
     STOP = 'STOP',
@@ -96,7 +96,7 @@ export class SandbotService {
     }
 
     public setSpeed(speed: number) {
-        this.send(`${COMMAND.SET_SPEED}:${speed}`);
+        this.send(`${COMMAND.SPEED}:${speed}`);
     }
 
     public pause() {
