@@ -5,7 +5,7 @@ import {Injectable} from '@nestjs/common';
 import {SandbotService} from './sandbot.service';
 
 const TRACK_DIR = path.join(process.cwd(), 'tracks');
-const TRACK_EXTENSION = 'thr';
+const TRACK_EXTENSION = '.thr';
 
 @Injectable()
 export class TrackService {
@@ -16,7 +16,7 @@ export class TrackService {
     constructor(private readonly sandbot: SandbotService) {}
 
     public start(name: string) {
-        const trackPath = path.join(TRACK_DIR, `${name}.${TRACK_EXTENSION}`);
+        const trackPath = path.join(TRACK_DIR, `${name}${TRACK_EXTENSION}`);
         this.lineReader = new LineReader(trackPath);
         this.processFile();
     }
