@@ -6,7 +6,7 @@ const DEV_PORT = 3000;
 const PRODUCTION_PORT = 80;
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {cors: true});
 
   const port = ConfigProvider.isProduction() ? PRODUCTION_PORT : DEV_PORT;
   await app.listen(port, '0.0.0.0');

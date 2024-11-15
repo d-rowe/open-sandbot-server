@@ -10,7 +10,7 @@ const TRACK_EXTENSION = '.thr';
 @Injectable()
 export class TrackService {
     private theta: number = 0;
-    private rho: number = 1;
+    private rho: number = 0;
     private lineReader: LineReader | null = null;
     private paused = false;
     constructor(private readonly sandbot: SandbotService) {}
@@ -48,6 +48,7 @@ export class TrackService {
         while (!this.paused) {
             const line = this.lineReader.next();
             if (!line) {
+                console.log('break');
                 break;
             }
             await this.processLine(line);
@@ -58,6 +59,7 @@ export class TrackService {
         const [sTheta, sRho] = line.toString().split(' ');
         const theta = Number(sTheta);
         const rho = Number(sRho);
+        console.log("reading coordinate:", theta, rho);
         if (theta === this.theta && rho === this.rho) {
             return;
         }

@@ -1,13 +1,11 @@
 import {Injectable} from '@nestjs/common';
 import {SerialPort} from 'serialport';
-import {
-    SerialError,
-    MovementLockError,
-} from '../errors';
+import {ReadlineParser} from '@serialport/parser-readline';
+import {SerialError} from '../errors';
 import {delay} from '../utils/timingUtils';
 
 const HARDWARE_CONFIG = {
-    MANUFACTURER: 'Arduino',
+    MANUFACTURER: 'Raspberry Pi',
     BAUD_RATE: 115_200,
     CONNECTION_RETRY_DELAY: 1_000,
 } as const;
@@ -19,8 +17,8 @@ enum STATUS {
 }
 
 const MESSAGE_STATUS_MAP = {
-    'STATUS:MOVING': STATUS.MOVING,
-    'STATUS:IDLE': STATUS.IDLE,
+    'STATUS MOVING': STATUS.MOVING,
+    'STATUS IDLE': STATUS.IDLE,
 }
 
 enum COMMAND {
@@ -36,6 +34,7 @@ type EventListeners = Record<STATUS, Set<CallableFunction>>;
 
 @Injectable()
 export class SandbotService {
+    private parser: ReadlineParser;
     private port: SerialPort;
     private status: STATUS = STATUS.DISCONNECTED;
     private eventListeners: EventListeners;
@@ -84,11 +83,7 @@ export class SandbotService {
             return;
         }
 
-        if (this.status === STATUS.MOVING) {
-            throw new MovementLockError('Movement in progress');
-        }
-
-        this.send(`${COMMAND.MOVE}:${theta} ${rho}`);
+        this.send(`${COMMAND.MOVE} ${theta} ${rho}`);
         this.setStatus(STATUS.MOVING);
         await this.reachedStatus(STATUS.IDLE);
         this.theta = theta;
@@ -113,18 +108,21 @@ export class SandbotService {
 
     private handlePortOpen() {
         this.setStatus(STATUS.IDLE);
-        this.port.on('data', this.handleMessageData);
+        this.parser = this.port.pipe(new ReadlineParser());
+        this.parser.on('data', this.handleMessageData);
         this.port.on('close', this.handleDisconnect);
     }
 
-    private handleMessageData(messageData: Buffer) {
-        const message = parseMessageData(messageData);
+    private handleMessageData(message: string) {
         const status = MESSAGE_STATUS_MAP[message];
 
         if (status) {
             this.setStatus(status);
             return;
+        } else {
+            this.setStatus(STATUS.IDLE);
         }
+
     }
 
     public on(status: STATUS, callback: CallableFunction) {
@@ -156,7 +154,7 @@ export class SandbotService {
         if (this.status === STATUS.DISCONNECTED) {
             throw new Error('Cannot send message when disconnected');
         }
-        this.getPort().write(message);
+        this.getPort().write(message + '\n');
     }
 
     private handleDisconnect() {
@@ -165,6 +163,7 @@ export class SandbotService {
     }
 
     private setStatus(status: STATUS) {
+        console.log("setting status:", status);
         if (this.status === status) {
             return;
         }
@@ -179,9 +178,4 @@ export class SandbotService {
 
         return this.port;
     }
-}
-
-function parseMessageData(messageData: Buffer): string {
-    const lines = messageData.toString().split('\n');
-    return lines[0].trim();
 }
